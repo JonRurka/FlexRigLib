@@ -23,6 +23,8 @@ namespace FlexRigLib {
 
 			int Build();
 
+			void Clear() { m_source.clear(); }
+
 			ComputeProgram* GetProgram() { return m_program; }
 
 			ComputeKernel* GetKernel(std::string name);

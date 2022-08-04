@@ -1,7 +1,7 @@
 #include "FileBuilder.h"
 
 
-void FileBuilder::SetGlobals(
+/*void FileBuilder::SetGlobals(
 	float dry_mass,
 	float cargo_mass,
 	std::string const& material_name)
@@ -179,4 +179,4 @@ void FileBuilder::AddContacters(std::vector<std::string> const& nodes)
 	{
 		AddContacter(nodes[i]);
 	}
-}
+}*/

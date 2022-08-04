@@ -6,7 +6,7 @@
 class FileBuilder
 {
 public:
-	File file;
+	/*File file;
 	NodeDefaults cur_nodeDefaults;
 	BeamDefaultsScale cur_beamDefaultsScale;
 	BeamDefaults cur_beamDefaults;
@@ -60,15 +60,15 @@ public:
 
 	void AddContacter(std::string const& n1);
 
-	void AddContacters(std::vector<std::string> const& nodes);
+	void AddContacters(std::vector<std::string> const& nodes);*/
 
 private:
-	int lineCounter{ 1 };
+	/*int lineCounter{ 1 };
 
 	Node::Ref getNodeRef(std::string const& node_id)
 	{
-		return Node::Ref(node_id, 0, 0/*Node::Ref::REGULAR_STATE_IS_VALID | Node::Ref::REGULAR_STATE_IS_NAMED */ , lineCounter);
-	}
+		return Node::Ref(node_id, 0, 0, lineCounter);
+	}*/
 };
 
 

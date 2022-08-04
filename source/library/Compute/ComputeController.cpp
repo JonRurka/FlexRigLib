@@ -2,25 +2,64 @@
 
 using namespace FlexRigLib::Compute;
 
-ComputeController::ComputeController(std::string inc_dir)
+ComputeController::ComputeController(ComputeEngine::Platform pltform, ComputeEngine::Device device, std::string inc_dir)
 {
-	ComputeEngine::Init(1, inc_dir);
+	ComputeEngine::Init(pltform, device, inc_dir);
 
 	m_context = ComputeEngine::GetNewContext();
 
 	m_builder = new ProgramBuilder(m_context, "program");
 
+	default_shaders.Load();
+
 	m_cur_state = ComputeState::Inited;
+}
+
+void FlexRigLib::Compute::ComputeController::ConstructProgram()
+{
+	if (m_cur_state == ComputeState::Inited)
+	{
+		for (auto s_name : default_shaders.m_source)
+		{
+			std::string source = default_shaders.GetCode(s_name);
+			m_builder->AppendSource(source + "\n");
+		}
+		// TODO: Event for additional source code
+
+		std::vector<std::string> f_defs = default_shaders.GetFunctionsDefinitions();
+		// TODO: Event for additional function definitions
+		for (auto def : f_defs)
+		{
+			m_builder->AppendSource(def);
+		}
+		m_builder->AppendSource("\n");
+
+		for (auto f_name : default_shaders.m_functions)
+		{
+			m_builder->AddFunction(f_name, default_shaders.GetCode(f_name) + "\n");
+		}
+		// TODO: Event for additional functions
+
+		for (auto k_name : default_shaders.m_kernels)
+		{
+			m_builder->AddKernel(k_name, default_shaders.GetCode(k_name) + "\n");
+		}
+		// TODO: Event for additional kernels
+
+		default_shaders.Clear();
+		m_cur_state = ComputeState::Constructed;
+	}
 }
 
 void ComputeController::BuildProgram()
 {
-	if (m_cur_state == ComputeState::Inited)
+	if (m_cur_state == ComputeState::Constructed)
 	{
 		int buildres = m_builder->Build();
 
 		if (buildres == 0)
 		{
+			printf("Program Built successfully!\n");
 			// get kernels
 			std::vector<std::string> kernls = m_builder->GetKernels();
 
@@ -34,18 +73,18 @@ void ComputeController::BuildProgram()
 				k_ent.args = 0;
 
 				m_kernel_entries[k_ent.name] = k_ent;
-
-				printf("Added kernel: %s\n", k_ent.name.c_str());
 			}
 
 			// established kernels.
 			// someKnownKernel = m_kernel_entries["coolKernel"];
 
+			m_builder->Clear();
 			m_cur_state = ComputeState::Built;
 		}
 		else
 		{
 			m_cur_state = ComputeState::BuildError;
+			//printf("Build Error: %s\n", m_builder->GetError().c_str());
 		}
 	}
 }
@@ -67,31 +106,32 @@ ComputeBuffer* ComputeController::NewReadWriteBuffer(size_t length)
 
 ComputeBuffer* ComputeController::NewBuffer(ComputeBuffer::Buffer_Type type, size_t length)
 {
-	printf("Get New buffer: %i\n", (int)length);
 	return m_context->GetBuffer(type, length);
 }
 
-int FlexRigLib::Compute::ComputeController::KernelAddBuffer(std::string k_name, ComputeBuffer* buffer)
+int ComputeController::KernelAddBuffer(std::string k_name, ComputeBuffer* buffer)
 {
-	if (m_kernel_entries.count(k_name) <= 0)
+	if (m_kernel_entries.count(k_name) <= 0) {
+		printf("Kernel not found: %s\n", k_name.c_str());
 		return -1;
+	}
 
 	int res = BindKernel(k_name, buffer, m_kernel_entries[k_name].args);
-	printf("Bound buffer to: %i\n", m_kernel_entries[k_name].args);
 	m_kernel_entries[k_name].args++;
 	return res;
 }
 
 int ComputeController::BindKernel(std::string k_name, ComputeBuffer* buffer, int arg)
 {
-	if (m_kernel_entries.count(k_name) <= 0)
+	if (m_kernel_entries.count(k_name) <= 0) {
+		printf("Kernel not found: %s\n", k_name.c_str());
 		return -1;
-
+	}
 
 	return BindKernel(buffer, m_kernel_entries[k_name].kernel, arg);
 }
 
-int FlexRigLib::Compute::ComputeController::RunKernel(std::string k_name, int size_x, int size_y, int size_z)
+int ComputeController::RunKernel(std::string k_name, int size_x, int size_y, int size_z)
 {
 	if (m_kernel_entries.count(k_name) <= 0)
 		return -1;
@@ -102,5 +142,6 @@ int FlexRigLib::Compute::ComputeController::RunKernel(std::string k_name, int si
 
 int ComputeController::BindKernel(ComputeBuffer* buffer, ComputeKernel* kernel, int arg)
 {
+	printf("Bind buffer to kernel: %i\n", arg);
 	return kernel->SetBuffer(0, buffer, arg);
 }

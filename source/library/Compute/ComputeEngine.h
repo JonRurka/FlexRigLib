@@ -13,7 +13,7 @@ namespace FlexRigLib {
         class ComputeKernel;
         class ComputeBuffer;
 
-#define MAX_DEVICES  10
+        #define MAX_DEVICES  10
 
         class ComputeBuffer
         {
@@ -39,10 +39,11 @@ namespace FlexRigLib {
                 return &buffer;
             }
 
-            void SetData(void* data);
-            int SetData(int device, void* data);
+            int SetData(void* data);
 
-            int GetData(int device, void* outData);
+            int GetData(void* outData);
+
+            size_t GetSize() { return size; };
 
             void Dispose();
         };
@@ -116,12 +117,48 @@ namespace FlexRigLib {
             static cl_uint num_of_platforms;
             static cl_context_properties properties[3];
             static cl_device_id device_ids[MAX_DEVICES];
+            static cl_device_id cur_device_id;
             static cl_uint num_of_devices;
 
             static std::string app_dir;
 
         public:
-            static int Init(int maxDevices, std::string dir);
+            struct Platform {
+                cl_platform_id platform;
+
+                char name[1000];
+                unsigned short name_size;
+
+                char vendor[1000];
+                unsigned short vendor_size;
+
+                char version[1000];
+                unsigned short version_size;
+            };
+
+            struct Device {
+                cl_device_id device;
+
+                char vendor[1000];
+                unsigned short vendor_size;
+
+                char name[1000];
+                unsigned short name_size;
+
+                unsigned int clock_frequency;
+                unsigned int num_compute_units;
+                unsigned long mem_size;
+                unsigned int max_work_size;
+                unsigned int group_size;
+                bool is_type_default;
+                bool is_type_CPU;
+                bool is_type_GPU;
+                bool is_type_Accelerator;
+            };
+
+            static std::vector<Platform> GetSupportedPlatforms();
+            static std::vector<Device> GetSupportedDevices(Platform pltfrm);
+            static int Init(Platform platform, Device device, std::string dir);
             static ComputeContext* GetNewContext();
 
             static cl_platform_id GetPlatform()
@@ -138,9 +175,9 @@ namespace FlexRigLib {
                 return app_dir;
             }
 
-            static cl_device_id* GetDevice(int i)
+            static cl_device_id GetDevice()
             {
-                return &device_ids[i];
+                return cur_device_id;
             }
 
             static std::string Get_CL_Version();

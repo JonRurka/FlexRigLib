@@ -2,6 +2,7 @@
 
 #include "ComputeEngine.h"
 #include "ProgramBuilder.h"
+#include "ShaderDepository.h"
 
 namespace FlexRigLib {
 	namespace Compute {
@@ -11,13 +12,16 @@ namespace FlexRigLib {
 			enum class ComputeState {
 				None,
 				Inited,
+				Constructed,
 				Built,
 				BuildError
 			};
 
-			ComputeController(std::string inc_dir);
+			ComputeController(ComputeEngine::Platform pltform, ComputeEngine::Device device, std::string inc_dir);
 
 			ProgramBuilder* GetProgramBuilder() { return m_builder; }
+
+			void ConstructProgram();
 
 			void BuildProgram();
 
@@ -51,6 +55,7 @@ namespace FlexRigLib {
 			ComputeContext* m_context{ nullptr };
 			ProgramBuilder* m_builder{ nullptr };
 			ComputeState m_cur_state{ ComputeState::None };
+			ShaderDepository default_shaders;
 
 
 			// known kernels
